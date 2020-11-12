@@ -177,6 +177,8 @@ Please check:
 
         PBXProject
         XCConfigurationList
+        XCRemoteSwiftPackageReference
+        XCSwiftPackageProductDependency
         PBXNativeTarget
         PBXTargetDependency
         PBXContainerItemProxy
@@ -349,8 +351,10 @@ Please check:
     def __unique_project(self, project_hex):
         """PBXProject. It is root itself, no parents to it"""
         self.vprint('uniquify PBXProject')
+        
         self.vprint('uniquify PBX*Group and PBX*Reference*')
         self.__unique_group_or_ref(project_hex, self.main_group_hex)
+        
         self.vprint('uniquify XCConfigurationList')
         bcl_hex = self.root_node['buildConfigurationList']
         self.__unique_build_configuration_list(project_hex, bcl_hex)
@@ -463,8 +467,8 @@ Please check:
         else:
             cur_path_key = bp_type
         self.__set_to_result(parent_hex, build_phase_hex, cur_path_key)
-        self.vprint('uniquify PBXBuildFile')
         for build_file_hex in current_node['files']:
+            self.vprint('uniquify PBXBuildFile {}'.format(build_file_hex))
             self.__unique_build_file(build_phase_hex, build_file_hex)
 
     def __unique_group_or_ref(self, parent_hex, group_ref_hex):
