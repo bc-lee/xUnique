@@ -358,6 +358,11 @@ Please check:
         self.vprint('uniquify XCConfigurationList')
         bcl_hex = self.root_node['buildConfigurationList']
         self.__unique_build_configuration_list(project_hex, bcl_hex)
+        
+        package_references_list = self.root_node['packageReferences']
+        for package_reference_hex in package_references_list:
+            self.__unique_package_reference(project_hex, package_reference_hex)
+        
         subprojects_list = self.root_node.get('projectReferences')
         if subprojects_list:
             self.vprint('uniquify Subprojects')
@@ -386,6 +391,12 @@ Please check:
         """XCBuildConfiguration"""
         cur_path_key = 'name'
         self.__set_to_result(parent_hex, build_configuration_hex, cur_path_key)
+
+    def __unique_package_reference(self, parent_hex, package_reference_hex):
+        """XCRemoteSwiftPackageReference"""
+        self.vprint('uniquify XCRemoteSwiftPackageReference')
+        cur_path_key = 'isa'
+        self.__set_to_result(parent_hex, package_reference_hex, cur_path_key)
 
     def __unique_target(self, target_hex):
         """PBXNativeTarget PBXAggregateTarget"""
