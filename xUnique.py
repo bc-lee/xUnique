@@ -192,7 +192,7 @@ Please check:
         if self.verbose:
             debug_result_file_path = path.join(self.xcodeproj_path, 'debug_result.json')
             with open(debug_result_file_path, 'w') as debug_result_file:
-                json_dump(self.__result, debug_result_file)
+                json_dump(self.__result, debug_result_file, indent=4)
             warning_print("Debug result json file has been written to '", debug_result_file_path, sep='')
         self.substitute_old_keys()
 
