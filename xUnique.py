@@ -404,6 +404,15 @@ Please check:
         current_node = self.nodes[target_hex]
         bcl_hex = current_node['buildConfigurationList']
         self.__unique_build_configuration_list(target_hex, bcl_hex)
+
+        try:
+            package_product_dependency_list = current_node['packageProductDependencies']
+            if package_product_dependency_list:
+                for package_product_dependency_hex in package_product_dependency_list:
+                    self.__unique_package_product_dependency(target_hex, package_product_dependency_hex)
+        except KeyError:
+            pass
+
         dependencies_list = current_node.get('dependencies')
         if dependencies_list:
             self.vprint('uniquify PBXTargetDependency')
@@ -430,6 +439,13 @@ Please check:
         else:
             raise XUniqueExit('PBXTargetDependency item "', target_dependency_hex,
                               '" is invalid due to lack of "targetProxy" attribute')
+
+    def __unique_package_product_dependency(self, parent_hex, package_product_dependency_hex):
+        """XCSwiftPackageProductDependency"""
+        self.vprint('uniquify XCSwiftPackageProductDependency')
+        cur_path_key = 'isa'
+        self.vprint(package_product_dependency_hex)
+        self.__set_to_result(parent_hex, package_product_dependency_hex, cur_path_key)
 
     def __unique_container_item_proxy(self, parent_hex, container_item_proxy_hex):
         """PBXContainerItemProxy"""
