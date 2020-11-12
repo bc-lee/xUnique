@@ -395,7 +395,7 @@ Please check:
     def __unique_package_reference(self, parent_hex, package_reference_hex):
         """XCRemoteSwiftPackageReference"""
         self.vprint('uniquify XCRemoteSwiftPackageReference')
-        cur_path_key = 'isa'
+        cur_path_key = 'repositoryURL'
         self.__set_to_result(parent_hex, package_reference_hex, cur_path_key)
 
     def __unique_target(self, target_hex):
@@ -443,7 +443,7 @@ Please check:
     def __unique_package_product_dependency(self, parent_hex, package_product_dependency_hex):
         """XCSwiftPackageProductDependency"""
         self.vprint('uniquify XCSwiftPackageProductDependency')
-        cur_path_key = 'isa'
+        cur_path_key = 'productName'
         self.vprint(package_product_dependency_hex)
         self.__set_to_result(parent_hex, package_product_dependency_hex, cur_path_key)
 
