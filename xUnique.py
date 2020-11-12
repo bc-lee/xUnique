@@ -523,20 +523,29 @@ Please check:
         """PBXBuildFile"""
         current_node = self.nodes.get(build_file_hex)
         if not current_node:
+            self.vprint("No node could be found for '{}'. It will be removed.".format(build_file_hex))
             self.__result.setdefault('to_be_removed', []).append(build_file_hex)
-        else:
-            file_ref_hex = current_node.get('fileRef')
-            if not file_ref_hex:
-                self.vprint("PBXFileReference '", file_ref_hex, "' not found, it will be removed.")
-                self.__result.setdefault('to_be_removed', []).append(build_file_hex)
-            else:
-                if self.__result.get(file_ref_hex):
-                    cur_path_key = self.__result[file_ref_hex]['path']
-                    self.__set_to_result(parent_hex, build_file_hex, cur_path_key)
-                else:
-                    self.vprint("PBXFileReference '", file_ref_hex, "' not found in PBXBuildFile '", build_file_hex,
-                                "'. To be removed.", sep='')
-                    self.__result.setdefault('to_be_removed', []).extend((build_file_hex, file_ref_hex))
+            return
+
+        def __set_result(ref):
+            cur_path_key = self.__result[ref]['path']
+            self.__set_to_result(parent_hex, build_file_hex, cur_path_key)
+
+        file_ref_hex = current_node.get('fileRef')
+        if file_ref_hex:
+            if self.__result.get(file_ref_hex):
+                __set_result(file_ref_hex)
+                return
+
+        product_ref_hex = current_node.get('productRef')
+        if product_ref_hex:
+            if self.__result.get(product_ref_hex):
+                __set_result(product_ref_hex)
+                return
+
+        self.vprint("Neither 'fileRef' nor 'productRef' could be found in '{}'. It will be removed.".format(build_file_hex))
+        self.__result.setdefault('to_be_removed', []).append(build_file_hex)
+            
 
     def __unique_build_rules(self, parent_hex, build_rule_hex):
         """PBXBuildRule"""
