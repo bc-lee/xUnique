@@ -176,6 +176,8 @@ Please check:
 
         PBXProject
         XCConfigurationList
+        XCRemoteSwiftPackageReference
+        XCSwiftPackageProductDependency
         PBXNativeTarget
         PBXTargetDependency
         PBXContainerItemProxy
@@ -191,7 +193,7 @@ Please check:
         if self.verbose:
             debug_result_file_path = path.join(self.xcodeproj_path, 'debug_result.json')
             with open(debug_result_file_path, 'w') as debug_result_file:
-                json_dump(self.__result, debug_result_file)
+                json_dump(self.__result, debug_result_file, indent=4)
             warning_print("Debug result json file has been written to '", debug_result_file_path, sep='')
         self.substitute_old_keys()
 
@@ -350,11 +352,18 @@ Please check:
     def __unique_project(self, project_hex):
         """PBXProject. It is root itself, no parents to it"""
         self.vprint('uniquify PBXProject')
+        
         self.vprint('uniquify PBX*Group and PBX*Reference*')
         self.__unique_group_or_ref(project_hex, self.main_group_hex)
+        
         self.vprint('uniquify XCConfigurationList')
         bcl_hex = self.root_node['buildConfigurationList']
         self.__unique_build_configuration_list(project_hex, bcl_hex)
+        
+        package_references_list = self.root_node['packageReferences']
+        for package_reference_hex in package_references_list:
+            self.__unique_package_reference(project_hex, package_reference_hex)
+        
         subprojects_list = self.root_node.get('projectReferences')
         if subprojects_list:
             self.vprint('uniquify Subprojects')
@@ -384,12 +393,27 @@ Please check:
         cur_path_key = 'name'
         self.__set_to_result(parent_hex, build_configuration_hex, cur_path_key)
 
+    def __unique_package_reference(self, parent_hex, package_reference_hex):
+        """XCRemoteSwiftPackageReference"""
+        self.vprint('uniquify XCRemoteSwiftPackageReference')
+        cur_path_key = 'repositoryURL'
+        self.__set_to_result(parent_hex, package_reference_hex, cur_path_key)
+
     def __unique_target(self, target_hex):
         """PBXNativeTarget PBXAggregateTarget"""
         self.vprint('uniquify PBX*Target')
         current_node = self.nodes[target_hex]
         bcl_hex = current_node['buildConfigurationList']
         self.__unique_build_configuration_list(target_hex, bcl_hex)
+
+        try:
+            package_product_dependency_list = current_node['packageProductDependencies']
+            if package_product_dependency_list:
+                for package_product_dependency_hex in package_product_dependency_list:
+                    self.__unique_package_product_dependency(target_hex, package_product_dependency_hex)
+        except KeyError:
+            pass
+
         dependencies_list = current_node.get('dependencies')
         if dependencies_list:
             self.vprint('uniquify PBXTargetDependency')
@@ -416,6 +440,13 @@ Please check:
         else:
             raise XUniqueExit('PBXTargetDependency item "', target_dependency_hex,
                               '" is invalid due to lack of "targetProxy" attribute')
+
+    def __unique_package_product_dependency(self, parent_hex, package_product_dependency_hex):
+        """XCSwiftPackageProductDependency"""
+        self.vprint('uniquify XCSwiftPackageProductDependency')
+        cur_path_key = 'productName'
+        self.vprint(package_product_dependency_hex)
+        self.__set_to_result(parent_hex, package_product_dependency_hex, cur_path_key)
 
     def __unique_container_item_proxy(self, parent_hex, container_item_proxy_hex):
         """PBXContainerItemProxy"""
@@ -464,8 +495,8 @@ Please check:
         else:
             cur_path_key = bp_type
         self.__set_to_result(parent_hex, build_phase_hex, cur_path_key)
-        self.vprint('uniquify PBXBuildFile')
         for build_file_hex in current_node['files']:
+            self.vprint('uniquify PBXBuildFile {}'.format(build_file_hex))
             self.__unique_build_file(build_phase_hex, build_file_hex)
 
     def __unique_group_or_ref(self, parent_hex, group_ref_hex):
@@ -493,20 +524,29 @@ Please check:
         """PBXBuildFile"""
         current_node = self.nodes.get(build_file_hex)
         if not current_node:
+            self.vprint("No node could be found for '{}'. It will be removed.".format(build_file_hex))
             self.__result.setdefault('to_be_removed', []).append(build_file_hex)
-        else:
-            file_ref_hex = current_node.get('fileRef')
-            if not file_ref_hex:
-                self.vprint("PBXFileReference '", file_ref_hex, "' not found, it will be removed.")
-                self.__result.setdefault('to_be_removed', []).append(build_file_hex)
-            else:
-                if self.__result.get(file_ref_hex):
-                    cur_path_key = self.__result[file_ref_hex]['path']
-                    self.__set_to_result(parent_hex, build_file_hex, cur_path_key)
-                else:
-                    self.vprint("PBXFileReference '", file_ref_hex, "' not found in PBXBuildFile '", build_file_hex,
-                                "'. To be removed.", sep='')
-                    self.__result.setdefault('to_be_removed', []).extend((build_file_hex, file_ref_hex))
+            return
+
+        def __set_result(ref):
+            cur_path_key = self.__result[ref]['path']
+            self.__set_to_result(parent_hex, build_file_hex, cur_path_key)
+
+        file_ref_hex = current_node.get('fileRef')
+        if file_ref_hex:
+            if self.__result.get(file_ref_hex):
+                __set_result(file_ref_hex)
+                return
+
+        product_ref_hex = current_node.get('productRef')
+        if product_ref_hex:
+            if self.__result.get(product_ref_hex):
+                __set_result(product_ref_hex)
+                return
+
+        self.vprint("Neither 'fileRef' nor 'productRef' could be found in '{}'. It will be removed.".format(build_file_hex))
+        self.__result.setdefault('to_be_removed', []).append(build_file_hex)
+            
 
     def __unique_build_rules(self, parent_hex, build_rule_hex):
         """PBXBuildRule"""
