@@ -360,9 +360,12 @@ Please check:
         bcl_hex = self.root_node['buildConfigurationList']
         self.__unique_build_configuration_list(project_hex, bcl_hex)
         
-        package_references_list = self.root_node['packageReferences']
-        for package_reference_hex in package_references_list:
-            self.__unique_package_reference(project_hex, package_reference_hex)
+        try:
+            package_references_list = self.root_node['packageReferences']
+            for package_reference_hex in package_references_list:
+                self.__unique_package_reference(project_hex, package_reference_hex)
+        except KeyError:
+            pass
         
         subprojects_list = self.root_node.get('projectReferences')
         if subprojects_list:
