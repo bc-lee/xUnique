@@ -30,12 +30,13 @@ readme_path = path.join(here, 'README.rst')
 with copen(readme_path, encoding='utf-8') as f:
     long_description = f.read()
 
-__version__ = '4.1.5-Tonband'
+__version__ = '4.1.6-Tonband'
 
 setup(
     name="xUnique",
     version=__version__,
     py_modules=['xUnique'],
+    install_requires=['natsort>=7.1'],
     entry_points = {
         'console_scripts' : [ 'xunique=xUnique:main' ],
     },

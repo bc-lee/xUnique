@@ -29,6 +29,7 @@ from sys import (argv as sys_argv, getfilesystemencoding as sys_get_fs_encoding,
 from collections import deque
 from filecmp import cmp as filecmp_cmp
 from optparse import OptionParser
+from natsort import natsorted
 
 
 def construct_compatibility_layer():
@@ -279,7 +280,7 @@ Please check:
             if files_flag:
                 if fc_end_ptn.search(line):
                     if lines:
-                        lines.sort(key=lambda file_str: files_key_ptn.search(file_str).group())
+                        lines = natsorted(lines, key=lambda file_str: files_key_ptn.search(file_str).group())
                         output_u8line(tmp_file, ''.join(lines))
                         lines = []
                     files_flag = False
@@ -300,7 +301,7 @@ Please check:
                 if fc_end_ptn.search(line):
                     if lines:
                         if self.main_group_hex not in last_two[0]:
-                            lines.sort(key=file_dir_order)
+                            lines = natsorted(lines, key=file_dir_order)
                         output_u8line(tmp_file, ''.join(lines))
                         lines = []
                     child_flag = False
@@ -321,9 +322,9 @@ Please check:
                 if pbx_end_ptn.search(line):
                     if lines:
                         if sort_pbx_by_file_name:
-                            lines.sort(key=lambda file_str: children_pbx_key_ptn.search(file_str).group())
+                            lines = natsorted(lines, key=lambda file_str: children_pbx_key_ptn.search(file_str).group())
                         else:
-                            lines.sort(key=lambda file_str: pbx_key_ptn.search(file_str).group(1))
+                            lines = natsorted(lines, key=lambda file_str: pbx_key_ptn.search(file_str).group(1))
                         output_u8line(tmp_file, ''.join(lines))
                         lines = []
                     pbx_flag = False
