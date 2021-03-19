@@ -324,7 +324,7 @@ Please check:
                         if sort_pbx_by_file_name:
                             lines = natsorted(lines, key=lambda file_str: children_pbx_key_ptn.search(file_str).group())
                         else:
-                            lines = natsorted(lines, key=lambda file_str: pbx_key_ptn.search(file_str).group(1))
+                            lines.sort(key=lambda file_str: pbx_key_ptn.search(file_str).group(1))
                         output_u8line(tmp_file, ''.join(lines))
                         lines = []
                     pbx_flag = False
