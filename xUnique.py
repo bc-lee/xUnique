@@ -433,17 +433,24 @@ Please check:
 
     def __unique_target_dependency(self, parent_hex, target_dependency_hex):
         """PBXTargetDependency"""
-        target_hex = self.nodes[target_dependency_hex].get('target')
-        if target_hex:
-            self.__set_to_result(parent_hex, target_dependency_hex, self.__result[target_hex]['path'])
+        # Special case for SPM binary framework dependencies
+        product_ref = self.nodes[target_dependency_hex].get('productRef')
+        if product_ref:
+            product_name = self.nodes[product_ref]['productName']
+            self.__set_to_result(parent_hex, target_dependency_hex, product_name)
+            self.__unique_package_product_dependency(target_dependency_hex, product_ref)
         else:
-            self.__set_to_result(parent_hex, target_dependency_hex, 'name')
-        target_proxy = self.nodes[target_dependency_hex].get('targetProxy')
-        if target_proxy:
-            self.__unique_container_item_proxy(target_dependency_hex, target_proxy)
-        else:
-            raise XUniqueExit('PBXTargetDependency item "', target_dependency_hex,
-                              '" is invalid due to lack of "targetProxy" attribute')
+            target_hex = self.nodes[target_dependency_hex].get('target')
+            if target_hex:
+                self.__set_to_result(parent_hex, target_dependency_hex, self.__result[target_hex]['path'])
+            else:
+                self.__set_to_result(parent_hex, target_dependency_hex, 'name')
+            target_proxy = self.nodes[target_dependency_hex].get('targetProxy')
+            if target_proxy:
+                self.__unique_container_item_proxy(target_dependency_hex, target_proxy)
+            else:
+                raise XUniqueExit('PBXTargetDependency item "', target_dependency_hex,
+                                  '" is invalid due to lack of "targetProxy" or "productRef" attribute')
 
     def __unique_package_product_dependency(self, parent_hex, package_product_dependency_hex):
         """XCSwiftPackageProductDependency"""
