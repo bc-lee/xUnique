@@ -133,7 +133,7 @@ Please check:
 2. The project file is not broken, such like merge conflicts, incomplete content due to xUnique failure. """.format(
                 cpe.output))
 
-    def __set_to_result(self, parent_hex, current_hex, current_path_key):
+    def __set_to_result(self, parent_hex, current_hex, current_path_key, alternative_path_key=None):
         current_node = self.nodes[current_hex]
         isa_type = current_node['isa']
         if isinstance(current_path_key, (list, tuple)):
@@ -141,6 +141,8 @@ Please check:
         elif isinstance(current_path_key, six.string_types):
             if current_path_key in current_node.keys():
                 current_path = current_node[current_path_key]
+            elif alternative_path_key in current_node.keys():
+                current_path = current_node[alternative_path_key]
             else:
                 current_path = current_path_key
         else:
@@ -399,9 +401,10 @@ Please check:
 
     def __unique_package_reference(self, parent_hex, package_reference_hex):
         """XCRemoteSwiftPackageReference"""
-        self.vprint('uniquify XCRemoteSwiftPackageReference')
+        self.vprint('uniquify XCLocalSwiftPackageReference/XCRemoteSwiftPackageReference')
         cur_path_key = 'repositoryURL'
-        self.__set_to_result(parent_hex, package_reference_hex, cur_path_key)
+        alternative_path_key = 'relativePath'
+        self.__set_to_result(parent_hex, package_reference_hex, cur_path_key, alternative_path_key)
 
     def __unique_target(self, target_hex):
         """PBXNativeTarget PBXAggregateTarget"""
